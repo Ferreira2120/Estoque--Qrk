@@ -1,5 +1,6 @@
 package br.com.ferreira.estoqueQrk.infra.persisten.repository;
 
+import br.com.ferreira.estoqueQrk.domain.enums.Measurements;
 import br.com.ferreira.estoqueQrk.domain.enums.TypeProd;
 import br.com.ferreira.estoqueQrk.domain.model.Product;
 import br.com.ferreira.estoqueQrk.domain.repository.ProductRepository;
@@ -9,6 +10,7 @@ import br.com.ferreira.estoqueQrk.infra.persisten.ConnectionDB;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -24,21 +26,30 @@ public class JdbcProductRepository implements ProductRepository {
     public Product createProduct(Product product) {
 
         String sql = """
-                INSET INTO estoque (name_product, price_product, type_product, measurements, product_code) VALUES (?, ?, ?, ?, ?);
+                INSET INTO estoque (name_product, price_product, 
+                      type_product, measurements, product_code) VALUES (?, ?, ?, ?, ?);
                 """;
 
         try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
             stmt.setString(1, product.getName());
             stmt.setDouble(2, product.getPrice());
             stmt.setString(3, product.getType().name());
             stmt.setString(4, product.getMeasurements().name());
             stmt.setInt(5, product.getProduct_code());
 
-            int lineAffect = stmt.executeUpdate();
-            if (lineAffect == 0){
+            int affectedLines = stmt.executeUpdate();
+            if (affectedLines == 0){
                 throw new InfraException("Error creating product! Please check the information to proceed.");
             }
-            return product;
+
+            Product product1 = new Product(
+                    product.getName(),
+                    product.getPrice(),
+                    product.getType(),
+                    product.getMeasurements(),
+                    product.getProduct_code());
+            return product1;
         }catch (SQLException e){
             throw new ProductException("Error creating product", e);
         }
@@ -46,17 +57,97 @@ public class JdbcProductRepository implements ProductRepository {
 
     @Override
     public Product selectProductById(Long id) {
-        return null;
+
+        String sql = """
+                    SELECT * FROM estoque WHERE id_product = ?;
+                    """;
+
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement
+                stmt = conn.prepareStatement(sql)){
+
+            stmt.setLong(1, id);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()){
+
+                TypeProd typeProd = TypeProd.valueOf(rs.getString("type_product"));
+                Measurements measurements = Measurements.valueOf(rs.getString("measurements"));
+
+                Product product = new Product(
+                        rs.getLong("id_product"),
+                        rs.getString("name_product"),
+                        rs.getDouble("price_product"),
+                        typeProd,
+                        measurements,
+                        rs.getInt("product_code")
+                );
+                return product;
+            }else {
+                throw new InfraException("We were unable to find the product " +
+                        "using the ID! Please check the information to continue.");
+            }
+        }catch (SQLException e){
+            throw new ProductException("The product could not be found.", e);
+        }
+
     }
 
     @Override
     public Product selectProductByCode(int code) {
-        return null;
+        String sql = """
+                SELECT * FROM estoque WHERE product_code = ?;
+                """;
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
+            stmt.setInt(1, code);
+
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()){
+
+                TypeProd typeProd = TypeProd.valueOf(rs.getString("type_product"));
+                Measurements measurements = Measurements.valueOf(rs.getString("measurements"));
+
+                Product product = new Product(
+                        rs.getLong("id_product"),
+                        rs.getString("name_product"),
+                        rs.getDouble("price_product"),
+                        typeProd,
+                        measurements,
+                        rs.getInt("product_code")
+                );
+                return product;
+            }else {
+                throw new InfraException("We were unable to find the product " +
+                        "using the product code! Please check the information to continue.");
+            }
+
+        }catch (SQLException e){
+            throw new ProductException("The product could not be found.", e);
+        }
     }
 
     @Override
     public Product updateProduct(Product product) {
-        return null;
+         String sql = """
+                 UPDATE estoque SET name_product = ?, price_product = ?, type_product = ?, measurements = ?, product_code = ? WHERE id_products = ?
+                 """;
+
+         try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
+             stmt.setString(1, product.getName());
+             stmt.setDouble(2, product.getPrice());
+             stmt.setString(3, product.getType().name());
+             stmt.setString(4, product.getMeasurements().name());
+             stmt.setInt(5, product.getProduct_code());
+             stmt.setLong(6, product.getId());
+
+             int affectedLines = stmt.executeUpdate();
+             if (affectedLines == 0){
+                 throw new InfraException("   ");
+             }
+
+         }
+
     }
 
     @Override

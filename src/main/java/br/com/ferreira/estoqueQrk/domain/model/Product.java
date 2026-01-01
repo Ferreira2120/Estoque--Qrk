@@ -17,6 +17,27 @@ public class Product {
 
     private int product_code;
 
+    public Product() {
+    }
+
+    public Product(Long id, String name, Double price,  TypeProd type, Measurements measurements, int product_code) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.type = type;
+        this.measurements = measurements;
+        this.product_code = product_code;
+    }
+
+    public Product(String name, Double price, TypeProd type,
+                   Measurements measurements, int product_code) {
+        this.name = name;
+        this.price = price;
+        this.type = type;
+        this.measurements = measurements;
+        this.product_code = product_code;
+    }
+
     public Long getId() {
         return id;
     }
@@ -63,5 +84,16 @@ public class Product {
 
     public void setProduct_code(int product_code) {
         this.product_code = product_code;
+    }
+
+    @Override
+    public String toString() {
+        return "Product:" +
+                "ID: " + id +
+                "Name:" + name.toUpperCase() + '\n' +
+                "Price=" + price + '\n' +
+                "Type=" + type + '\n' +
+                "Measurements=" + measurements + '\n' +
+                "Product code=" + product_code;
     }
 }
