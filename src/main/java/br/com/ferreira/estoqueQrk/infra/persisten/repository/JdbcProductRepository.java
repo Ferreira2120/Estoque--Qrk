@@ -143,30 +143,130 @@ public class JdbcProductRepository implements ProductRepository {
 
              int affectedLines = stmt.executeUpdate();
              if (affectedLines == 0){
-                 throw new InfraException("   ");
+                 throw new InfraException("Error updating product! Please check the information to be processed.");
              }
 
+             return product;
+         }catch (SQLException e){
+             throw new ProductException("The operation cannot be performed.", e);
          }
 
     }
 
     @Override
     public void deleteProduct(Long id) {
+        String sql = """
+                DELETE FROM estoque WHERE id_product = ?;
+                """;
+
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
+            stmt.setLong(1, id);
+
+            int affectedLines = stmt.executeUpdate();
+            if (affectedLines == 0){
+                throw new InfraException("Error deleting product! Please check the information to be processed.");
+            }
+        }catch (SQLException e){
+            throw new ProductException("The operation cannot be performed.", e);
+        }
 
     }
 
     @Override
     public List<Product> selectAllProducts() {
-        return List.of();
+
+        String sql = """
+                SELECT * FROM estoque;
+                """;
+
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
+            ResultSet rs = stmt.executeQuery();
+            List<Product> products = new java.util.ArrayList<>();
+
+            while (rs.next()){
+                TypeProd typeProd = TypeProd.valueOf(rs.getString("type_product"));
+                Measurements measurements = Measurements.valueOf(rs.getString("measurements"));
+
+                Product product = new Product(
+                        rs.getLong("id_product"),
+                        rs.getString("name_product"),
+                        rs.getDouble("price_product"),
+                        typeProd,
+                        measurements,
+                        rs.getInt("product_code")
+                );
+                products.add(product);
+            }
+            return products;
+        }catch (SQLException e){
+            throw new ProductException("The operation cannot be performed.", e);
+        }
     }
 
     @Override
     public List<Product> selectProductsByType(String type) {
-        return List.of();
+        String sql = """
+                SELECT * FROM estoque WHERE type_product = ?;
+                """;
+
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+
+            stmt.setString(1, type);
+
+            ResultSet rs = stmt.executeQuery();
+            List<Product> products = new java.util.ArrayList<>();
+
+            while (rs.next()){
+                TypeProd typeProd = TypeProd.valueOf(rs.getString("type_product"));
+                Measurements measurements = Measurements.valueOf(rs.getString("measurements"));
+
+                Product product = new Product(
+                        rs.getLong("id_product"),
+                        rs.getString("name_product"),
+                        rs.getDouble("price_product"),
+                        typeProd,
+                        measurements,
+                        rs.getInt("product_code")
+                );
+                products.add(product);
+            }
+            return products;
+        }catch (SQLException e) {
+            throw new ProductException("The operation cannot be performed.", e);
+        }
+
     }
 
     @Override
     public List<Product> selectProductsByMeasurement(String measurement) {
-        return List.of();
+        String sql = """
+                SELECT * FROM estoque WHERE measurements = ?;
+                """;
+        try(Connection conn = this.connectionDB.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)){
+            stmt.setString(1, measurement);
+
+            ResultSet rs = stmt.executeQuery();
+            List<Product> products = new java.util.ArrayList<>();
+
+            while (rs.next()){
+                TypeProd typeProd = TypeProd.valueOf(rs.getString("type_product"));
+                Measurements measurements = Measurements.valueOf(rs.getString("measurements"));
+
+                Product product = new Product(
+                        rs.getLong("id_product"),
+                        rs.getString("name_product"),
+                        rs.getDouble("price_product"),
+                        typeProd,
+                        measurements,
+                        rs.getInt("product_code")
+                );
+                products.add(product);
+            }
+            return products;
+        }catch (SQLException e) {
+            throw new ProductException("The operation cannot be performed.", e);
+        }
     }
 }
